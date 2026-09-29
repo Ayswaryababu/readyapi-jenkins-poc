@@ -123,7 +123,7 @@ pipeline {
         stage('Archive Results') {
             steps {
                 archiveArtifacts(
-                    artifacts: 'reports/**/*',
+                    artifacts: 'reports/ReadyAPI-Test-Report.pdf,reports/TEST-DemoTestSuite.xml,reports/readyapi-console.log',
                     fingerprint: true,
                     allowEmptyArchive: false
                 )
@@ -153,6 +153,9 @@ pipeline {
             script {
                 sendNotification('aborted.html', 'ABORTED/TIMEOUT')
             }
+        }
+        cleanup {
+            deleteDir()
         }
     }
 }

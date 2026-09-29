@@ -69,11 +69,9 @@ fi
 # ============================================================
 
 echo ""
-echo "Cleaning previous reports..."
+echo "Preparing report directory..."
 
-find "$REPORT_DIR" -type f \
-    ! -name "readyapi-console.log" \
-    -delete
+mkdir -p "$REPORT_DIR"
 
 # ============================================================
 # Run ReadyAPI
