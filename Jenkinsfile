@@ -2,17 +2,10 @@ pipeline {
     agent any
 
     options {
-        disableConcurrentBuilds()
         timestamps()
     }
 
     stages {
-
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
 
         stage('Verify ReadyAPI Project') {
             steps {
@@ -30,29 +23,49 @@ pipeline {
             }
         }
 
-        stage('Run ReadyAPI Tests') {
+        stage('Wait for ReadyAPI Resource') {
             steps {
-                sh '''
-                    echo "========================================"
-                    echo "Running ReadyAPI Tests"
-                    echo "========================================"
+                script {
+                    echo "Waiting for READYAPI_TESTENGINE resource..."
 
-                    chmod +x scripts/run_readyapi.sh
+                    lock(
+                        resource: 'READYAPI_TESTENGINE',
+                        variable: 'READYAPI_RESOURCE'
+                    ) {
 
-                    ./scripts/run_readyapi.sh
-                '''
-            }
-        }
+                        echo "========================================"
+                        echo "READYAPI RESOURCE ACQUIRED"
+                        echo "========================================"
 
-        stage('Generate PDF Report') {
-            steps {
-                sh '''
-                    echo "========================================"
-                    echo "Generating PDF Report"
-                    echo "========================================"
+                        echo "Resource: ${env.READYAPI_RESOURCE}"
 
-                    python3 scripts/generate_pdf_report.py
-                '''
+                        stage('Run ReadyAPI Tests') {
+                            sh '''
+                                echo "========================================"
+                                echo "Running ReadyAPI Tests"
+                                echo "========================================"
+
+                                chmod +x scripts/run_readyapi.sh
+
+                                ./scripts/run_readyapi.sh
+                            '''
+                        }
+
+                        stage('Generate PDF Report') {
+                            sh '''
+                                echo "========================================"
+                                echo "Generating PDF Report"
+                                echo "========================================"
+
+                                python3 scripts/generate_pdf_report.py
+                            '''
+                        }
+
+                        echo "========================================"
+                        echo "READYAPI RESOURCE WILL BE RELEASED"
+                        echo "========================================"
+                    }
+                }
             }
         }
 
