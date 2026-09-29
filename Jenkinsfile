@@ -1,6 +1,14 @@
 pipeline {
     agent any
 
+    parameters {
+        string(
+            name: 'REQUESTER_EMAIL',
+            defaultValue: '',
+            description: 'Email address to receive the ReadyAPI test report'
+        )
+    }
+
     options {
         timestamps()
     }
@@ -26,7 +34,14 @@ pipeline {
         stage('Wait for ReadyAPI Resource') {
             steps {
                 script {
-                    echo "Waiting for READYAPI_TESTENGINE resource..."
+
+                    if (!params.REQUESTER_EMAIL?.trim()) {
+                        error("REQUESTER_EMAIL parameter is required.")
+                    }
+
+                    echo "========================================"
+                    echo "Waiting for READYAPI_TESTENGINE resource"
+                    echo "========================================"
 
                     lock(
                         resource: 'READYAPI_TESTENGINE',
@@ -81,16 +96,76 @@ pipeline {
     }
 
     post {
+
         always {
+            echo "========================================"
             echo "ReadyAPI automation completed."
+            echo "Requester: ${params.REQUESTER_EMAIL}"
+            echo "========================================"
         }
 
         success {
             echo "ReadyAPI automation PASSED."
+
+            emailext(
+                subject: "ReadyAPI Test Result - ${env.JOB_NAME} #${env.BUILD_NUMBER} - PASSED",
+
+                body: """
+Hello,
+
+The ReadyAPI automation execution has completed successfully.
+
+Project     : ReadyAPI-Jenkins-POC
+Test Suite  : DemoTestSuite
+Test Case   : GetUserTest
+Build       : #${env.BUILD_NUMBER}
+Result      : PASSED
+
+The ReadyAPI PDF test report is attached to this email.
+
+Jenkins Build:
+${env.BUILD_URL}
+
+Regards,
+Jenkins
+""",
+
+                attachmentsPattern: 'reports/ReadyAPI-Test-Report.pdf',
+
+                to: "${params.REQUESTER_EMAIL}"
+            )
         }
 
         failure {
             echo "ReadyAPI automation FAILED."
+
+            emailext(
+                subject: "ReadyAPI Test Result - ${env.JOB_NAME} #${env.BUILD_NUMBER} - FAILED",
+
+                body: """
+Hello,
+
+The ReadyAPI automation execution has failed.
+
+Project     : ReadyAPI-Jenkins-POC
+Test Suite  : DemoTestSuite
+Test Case   : GetUserTest
+Build       : #${env.BUILD_NUMBER}
+Result      : FAILED
+
+Please check the Jenkins console output and archived reports.
+
+Jenkins Build:
+${env.BUILD_URL}
+
+Regards,
+Jenkins
+""",
+
+                attachmentsPattern: 'reports/ReadyAPI-Test-Report.pdf',
+
+                to: "${params.REQUESTER_EMAIL}"
+            )
         }
     }
 }
