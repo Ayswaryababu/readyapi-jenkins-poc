@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<con:soapui-project id="82601319-15c8-47ac-a34c-0c7b287d025b" created="4.2.0" activeEnvironment="Default environment" encryptionMode="Not encrypted" name="ReadyAPI-Jenkins-POC" projectVersion="" updated="4.2.0 2026-08-18T11:17:15Z" xmlns:con="http://eviware.com/soapui/config">
+  <con:settings/>
+  <con:interface xsi:type="con:RestService" id="2adaa4d8-e91f-418a-8fb9-9952df81d91d" lastUpdated="2026-09-29T14:19:21.351+05:30" wadlVersion="http://wadl.dev.java.net/2009/02" name="https://jsonplaceholder.typicode.com" type="rest" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <con:settings id="22c6b2a0-0d07-4727-ab41-d1741dd6862b"/>
+    <con:definitionCache type="TEXT" rootPart=""/>
+    <con:endpoints>
+      <con:endpoint>https://jsonplaceholder.typicode.com</con:endpoint>
+    </con:endpoints>
+    <con:resource name="" path="/users/1" id="dfd72e7a-23c3-454f-993f-74535686d2e0">
+      <con:settings/>
+      <con:parameters/>
+      <con:method name="" id="9fae1800-86c4-4c16-8c7a-c8b299f91452" method="GET">
+        <con:settings/>
+        <con:parameters/>
+        <con:representation type="RESPONSE">
+          <con:mediaType>text/html; charset=UTF-8</con:mediaType>
+          <con:status>200</con:status>
+          <con:params/>
+          <con:element>html</con:element>
+        </con:representation>
+        <con:representation type="RESPONSE">
+          <con:mediaType>application/json; charset=utf-8</con:mediaType>
+          <con:status>200</con:status>
+          <con:params/>
+          <con:element xmlns:ns="https://jsonplaceholder.typicode.com/users/1">ns:Response</con:element>
+        </con:representation>
+        <con:representation type="FAULT">
+          <con:mediaType>application/json; charset=utf-8</con:mediaType>
+          <con:status>404</con:status>
+          <con:params/>
+          <con:element>Fault</con:element>
+        </con:representation>
+        <con:request name="Request 1" id="25a6b512-6f2c-44bd-925b-9a9b018e6b13" mediaType="application/json">
+          <con:settings>
+            <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting>
+          </con:settings>
+          <con:endpoint>https://jsonplaceholder.typicode.com</con:endpoint>
+          <con:request/>
+          <con:originalUri>https://jsonplaceholder.typicode.com/users/1</con:originalUri>
+          <con:credentials>
+            <con:selectedAuthProfile>No Authorization</con:selectedAuthProfile>
+            <con:authType>No Authorization</con:authType>
+          </con:credentials>
+          <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+          <con:parameters/>
+        </con:request>
+      </con:method>
+    </con:resource>
+  </con:interface>
+  <con:testSuite id="ebac4481-d14a-4f86-bdcb-87bf219cf39f" name="DemoTestSuite">
+    <con:settings id="20664104-d9c7-4b0c-8da7-8c2185a15d27"/>
+    <con:runType>SEQUENTIAL</con:runType>
+    <con:testCase id="bcbe7867-798d-4c1e-9399-30d3785b51b5" discardOkResults="false" failOnError="false" failTestCaseOnErrors="true" keepSession="false" name="GetUserTest" searchProperties="true" timeout="0">
+      <con:settings/>
+      <con:testStep type="restrequest" name="GetUser" id="ab114a22-20d9-4653-a62b-6aeac3c3b8a8">
+        <con:settings/>
+        <con:config service="https://jsonplaceholder.typicode.com" resourcePath="/users/1" methodName="" xsi:type="con:RestRequestStep" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <con:restRequest name="GetUser" id="25a6b512-6f2c-44bd-925b-9a9b018e6b13" mediaType="application/json">
+            <con:settings>
+              <con:setting id="com.eviware.soapui.impl.wsdl.WsdlRequest@request-headers">&lt;xml-fragment/></con:setting>
+            </con:settings>
+            <con:endpoint>https://jsonplaceholder.typicode.com</con:endpoint>
+            <con:request/>
+            <con:originalUri>https://jsonplaceholder.typicode.com/</con:originalUri>
+            <con:assertion type="Valid HTTP Status Codes" id="fc4bc71e-305d-478c-be9e-a12747f8bc81" name="Valid HTTP Status Codes">
+              <con:settings/>
+              <con:configuration>
+                <codes>200</codes>
+              </con:configuration>
+            </con:assertion>
+            <con:assertion type="Response SLA Assertion" id="3be059a3-1ee0-4e5a-8af0-e031a9e41625" name="Response SLA">
+              <con:configuration>
+                <SLA>200</SLA>
+              </con:configuration>
+            </con:assertion>
+            <con:assertion type="Simple Contains" id="7f17cc76-d95d-40b4-9d15-5c948382c2ff" name="Contains">
+              <con:configuration>
+                <token>"id":1</token>
+                <ignoreCase>false</ignoreCase>
+                <useRegEx>false</useRegEx>
+              </con:configuration>
+            </con:assertion>
+            <con:assertion type="Simple Contains" id="6dd54abb-3fae-40b4-aa19-37d806660519" name="Contains 2">
+              <con:configuration>
+                <token>"id": 1</token>
+                <ignoreCase>false</ignoreCase>
+                <useRegEx>false</useRegEx>
+              </con:configuration>
+            </con:assertion>
+            <con:credentials>
+              <con:selectedAuthProfile>No Authorization</con:selectedAuthProfile>
+              <con:authType>No Authorization</con:authType>
+            </con:credentials>
+            <con:jmsConfig JMSDeliveryMode="PERSISTENT"/>
+            <con:parameters/>
+          </con:restRequest>
+        </con:config>
+      </con:testStep>
+      <con:properties/>
+      <con:reportParameters/>
+    </con:testCase>
+    <con:properties/>
+    <con:reportParameters/>
+  </con:testSuite>
+  <con:properties/>
+  <con:wssContainer/>
+  <con:databaseConnectionContainer/>
+  <con:jmsConnectionContainer/>
+  <con:oAuth2ProfileContainer/>
+  <con:oAuth1ProfileContainer/>
+  <con:reporting>
+    <con:xmlTemplates/>
+    <con:parameters/>
+  </con:reporting>
+  <con:eventHandlers type="RequestFilter.filterRequest" name="RequestFilter.filterRequest">
+    <con:script>// Sample event script to add custom HTTP header to all outgoing REST, SOAP and HTTP(S) calls
+// This code is often used for adding custom authentication to ReadyAPI functional tests
+
+// If hardcoding the token, uncomment and change line 5
+// token = '4567'
+
+// If your token is parameterized in Project level custom property, uncomment line 8
+// token = request.parent.testCase.testSuite.project.getProperty('auth_token').getValue()
+
+// To modify all outgoing calls, remove comments from lines 11 to 16
+// headers = request.requestHeaders
+// if (headers.containsKey('auth_token2') == false) {
+//   headers.put('auth_token2', token)
+//   request.requestHeaders = headers
+// }</con:script>
+  </con:eventHandlers>
+  <con:eventHandlers type="TestRunListener.afterStep" name="TestRunListener.afterStep">
+    <con:script>// Save all test step results into files
+// Change the directory path in line 5 to a location where you want to store details
+// then uncomment lines 5 to 10
+
+// filePath = 'C:\\tempOutputDirectory\\'
+// fos = new java.io.FileOutputStream(filePath + testStepResult.testStep.label + '.txt', true)
+// pw = new java.io.PrintWriter(fos)
+// testStepResult.writeTo(pw)
+// pw.close()
+// fos.close()</con:script>
+  </con:eventHandlers>
+  <con:authRepository/>
+  <con:tags/>
+</con:soapui-project>
