@@ -1,7 +1,13 @@
 pipeline {
     agent any
 
+    options {
+        disableConcurrentBuilds()
+        timestamps()
+    }
+
     stages {
+
         stage('Checkout') {
             steps {
                 checkout scm
@@ -11,11 +17,15 @@ pipeline {
         stage('Verify ReadyAPI Project') {
             steps {
                 sh '''
-                    echo "Workspace:"
+                    echo "========================================"
+                    echo "Workspace"
+                    echo "========================================"
+
                     pwd
 
-                    echo "Files:"
-                    find . -maxdepth 3 -type f
+                    echo ""
+                    echo "Repository files:"
+                    find . -maxdepth 3 -type f -print
                 '''
             }
         }
@@ -23,13 +33,51 @@ pipeline {
         stage('Run ReadyAPI Tests') {
             steps {
                 sh '''
-                    /Applications/ReadyAPI-4.2.0.app/Contents/Resources/app/bin/testrunner.sh \
-                    -s"DemoTestSuite" \
-                    -c"GetUserTest" \
-                    -r \
-                    "readyapi/ReadyAPI-Jenkins-POC-readyapi-project.xml"
+                    echo "========================================"
+                    echo "Running ReadyAPI Tests"
+                    echo "========================================"
+
+                    chmod +x scripts/run_readyapi.sh
+
+                    ./scripts/run_readyapi.sh
                 '''
             }
+        }
+
+        stage('Generate PDF Report') {
+            steps {
+                sh '''
+                    echo "========================================"
+                    echo "Generating PDF Report"
+                    echo "========================================"
+
+                    python3 scripts/generate_pdf_report.py
+                '''
+            }
+        }
+
+        stage('Archive Reports') {
+            steps {
+                archiveArtifacts(
+                    artifacts: 'reports/**/*',
+                    fingerprint: true,
+                    allowEmptyArchive: false
+                )
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "ReadyAPI automation completed."
+        }
+
+        success {
+            echo "ReadyAPI automation PASSED."
+        }
+
+        failure {
+            echo "ReadyAPI automation FAILED."
         }
     }
 }
