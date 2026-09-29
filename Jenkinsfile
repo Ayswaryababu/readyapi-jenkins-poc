@@ -19,5 +19,17 @@ pipeline {
                 '''
             }
         }
+
+        stage('Run ReadyAPI Tests') {
+            steps {
+                sh '''
+                    /Applications/ReadyAPI-4.2.0.app/Contents/Resources/app/bin/testrunner.sh \
+                    -s"DemoTestSuite" \
+                    -c"GetUserTest" \
+                    -r \
+                    "readyapi/ReadyAPI-Jenkins-POC-readyapi-project.xml"
+                '''
+            }
+        }
     }
 }
