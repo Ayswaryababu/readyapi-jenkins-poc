@@ -1,3 +1,20 @@
+def sendNotification(String template, String status) {
+    def body = readFile("email/${template}")
+        .replace('{{PROJECT}}', 'ReadyAPI-Jenkins-POC')
+        .replace('{{TEST_SUITE}}', env.READYAPI_SUITE)
+        .replace('{{TEST_CASE}}', env.READYAPI_CASE)
+        .replace('{{BUILD_NUMBER}}', env.BUILD_NUMBER)
+        .replace('{{BUILD_URL}}', env.BUILD_URL)
+
+    emailext(
+        to: params.REQUESTER_EMAIL,
+        subject: "ReadyAPI Test Result - ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${status}",
+        body: body,
+        mimeType: 'text/html',
+        attachmentsPattern: 'reports/ReadyAPI-Test-Report.pdf'
+    )
+}
+
 pipeline {
     agent any
 
@@ -5,86 +22,105 @@ pipeline {
         string(
             name: 'REQUESTER_EMAIL',
             defaultValue: '',
-            description: 'Email address to receive the ReadyAPI test report'
+            description: 'Email address to receive the test report'
+        )
+        booleanParam(
+            name: 'ENABLE_TEST_HOLD',
+            defaultValue: true,
+            description: 'Hold the shared resource for 2 minutes for queue testing'
         )
     }
 
+    // Pipeline configuration
     options {
         timestamps()
+        disableConcurrentBuilds(abortPrevious: false)
+        timeout(time: 30, unit: 'MINUTES')
+        skipDefaultCheckout(true)
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+    }
+
+    // ReadyAPI configuration
+    environment {
+        READYAPI_RESOURCE = 'READYAPI_TESTENGINE'
+        READYAPI_SUITE = 'DemoTestSuite'
+        READYAPI_CASE = 'GetUserTest'
+        READYAPI_RUNNER = '/Applications/ReadyAPI-4.2.0.app/Contents/Resources/app/bin/testrunner.sh'
+        READYAPI_PROJECT = 'readyapi/ReadyAPI-Jenkins-POC-readyapi-project.xml'
     }
 
     stages {
 
-        stage('Verify ReadyAPI Project') {
+        // Checkout source
+        stage('Checkout') {
             steps {
+                checkout scm
+            }
+        }
+
+        // Validate required dependencies
+        stage('Validate') {
+            steps {
+                script {
+                    if (!params.REQUESTER_EMAIL?.trim()) {
+                        error('REQUESTER_EMAIL is required.')
+                    }
+                }
+
                 sh '''
-                    echo "========================================"
-                    echo "Workspace"
-                    echo "========================================"
+                    test -x "$READYAPI_RUNNER" || {
+                        echo "ERROR: ReadyAPI runner not found."
+                        exit 1
+                    }
 
-                    pwd
+                    test -f "$READYAPI_PROJECT" || {
+                        echo "ERROR: ReadyAPI project not found."
+                        exit 1
+                    }
 
-                    echo ""
-                    echo "Repository files:"
-                    find . -maxdepth 3 -type f -print
+                    python3 --version
                 '''
             }
         }
 
-        stage('Wait for ReadyAPI Resource') {
+        // Acquire shared resource and execute ReadyAPI
+        stage('Execute ReadyAPI') {
             steps {
                 script {
-
-                    if (!params.REQUESTER_EMAIL?.trim()) {
-                        error("REQUESTER_EMAIL parameter is required.")
-                    }
-
-                    echo "========================================"
-                    echo "Waiting for READYAPI_TESTENGINE resource"
-                    echo "========================================"
-
                     lock(
-                        resource: 'READYAPI_TESTENGINE',
-                        variable: 'READYAPI_RESOURCE'
+                        resource: env.READYAPI_RESOURCE,
+                        variable: 'LOCKED_RESOURCE'
                     ) {
+                        echo "Acquired: ${env.LOCKED_RESOURCE}"
 
-                        echo "========================================"
-                        echo "READYAPI RESOURCE ACQUIRED"
-                        echo "========================================"
-
-                        echo "Resource: ${env.READYAPI_RESOURCE}"
-
-                        stage('Run ReadyAPI Tests') {
+                        timeout(time: 20, unit: 'MINUTES') {
                             sh '''
-                                echo "========================================"
-                                echo "Running ReadyAPI Tests"
-                                echo "========================================"
-
                                 chmod +x scripts/run_readyapi.sh
-
                                 ./scripts/run_readyapi.sh
                             '''
                         }
 
-                        stage('Generate PDF Report') {
-                            sh '''
-                                echo "========================================"
-                                echo "Generating PDF Report"
-                                echo "========================================"
+                        echo 'ReadyAPI execution completed.'
 
-                                python3 scripts/generate_pdf_report.py
-                            '''
+                        // Temporary hold for queue testing
+                        if (params.ENABLE_TEST_HOLD) {
+                            echo 'Holding shared resource for 2 minutes...'
+                            sleep(time: 2, unit: 'MINUTES')
                         }
-
-                        echo "========================================"
-                        echo "READYAPI RESOURCE WILL BE RELEASED"
-                        echo "========================================"
                     }
                 }
             }
         }
 
-        stage('Archive Reports') {
+        // Generate readable PDF report
+        stage('Generate Report') {
+            steps {
+                sh 'python3 scripts/generate_pdf_report.py'
+            }
+        }
+
+        // Store reports in Jenkins
+        stage('Archive Results') {
             steps {
                 archiveArtifacts(
                     artifacts: 'reports/**/*',
@@ -95,77 +131,28 @@ pipeline {
         }
     }
 
+    // Send result notification
     post {
-
         always {
-            echo "========================================"
-            echo "ReadyAPI automation completed."
-            echo "Requester: ${params.REQUESTER_EMAIL}"
-            echo "========================================"
+            echo "Build #${env.BUILD_NUMBER}: ${currentBuild.currentResult}"
         }
 
         success {
-            echo "ReadyAPI automation PASSED."
-
-            emailext(
-                subject: "ReadyAPI Test Result - ${env.JOB_NAME} #${env.BUILD_NUMBER} - PASSED",
-
-                body: """
-Hello,
-
-The ReadyAPI automation execution has completed successfully.
-
-Project     : ReadyAPI-Jenkins-POC
-Test Suite  : DemoTestSuite
-Test Case   : GetUserTest
-Build       : #${env.BUILD_NUMBER}
-Result      : PASSED
-
-The ReadyAPI PDF test report is attached to this email.
-
-Jenkins Build:
-${env.BUILD_URL}
-
-Regards,
-Jenkins
-""",
-
-                attachmentsPattern: 'reports/ReadyAPI-Test-Report.pdf',
-
-                to: "${params.REQUESTER_EMAIL}"
-            )
+            script {
+                sendNotification('success.html', 'PASSED')
+            }
         }
 
         failure {
-            echo "ReadyAPI automation FAILED."
+            script {
+                sendNotification('failure.html', 'FAILED')
+            }
+        }
 
-            emailext(
-                subject: "ReadyAPI Test Result - ${env.JOB_NAME} #${env.BUILD_NUMBER} - FAILED",
-
-                body: """
-Hello,
-
-The ReadyAPI automation execution has failed.
-
-Project     : ReadyAPI-Jenkins-POC
-Test Suite  : DemoTestSuite
-Test Case   : GetUserTest
-Build       : #${env.BUILD_NUMBER}
-Result      : FAILED
-
-Please check the Jenkins console output and archived reports.
-
-Jenkins Build:
-${env.BUILD_URL}
-
-Regards,
-Jenkins
-""",
-
-                attachmentsPattern: 'reports/ReadyAPI-Test-Report.pdf',
-
-                to: "${params.REQUESTER_EMAIL}"
-            )
+        aborted {
+            script {
+                sendNotification('aborted.html', 'ABORTED/TIMEOUT')
+            }
         }
     }
 }

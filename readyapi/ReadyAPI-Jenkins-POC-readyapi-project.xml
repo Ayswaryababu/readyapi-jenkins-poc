@@ -3,7 +3,7 @@
   <con:settings/>
   <con:interface xsi:type="con:RestService" id="ca8eb782-a1c7-4f96-a4ac-3825ea09df0a" lastUpdated="2026-09-29T23:27:19.138+05:30" wadlVersion="http://wadl.dev.java.net/2009/02" name="https://jsonplaceholder.typicode.com" type="rest" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <con:settings id="2d6e6283-232c-43a0-8b6d-c44e1e7969b0"/>
-    <con:definitionCache/>
+    <con:definitionCache type="TEXT" rootPart=""/>
     <con:endpoints>
       <con:endpoint>https://jsonplaceholder.typicode.com</con:endpoint>
     </con:endpoints>
@@ -66,6 +66,13 @@
             <con:assertion type="Response SLA Assertion" id="0c232cc0-2010-47e0-8d59-ec5c23a94434" name="Response SLA">
               <con:configuration>
                 <SLA>2000</SLA>
+              </con:configuration>
+            </con:assertion>
+            <con:assertion type="Simple Contains" id="96a1ef62-26d0-4fde-9f0d-354e8c751fe5" name="Contains">
+              <con:configuration>
+                <token>"id": 1</token>
+                <ignoreCase>false</ignoreCase>
+                <useRegEx>false</useRegEx>
               </con:configuration>
             </con:assertion>
             <con:credentials>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>ReadyAPI Automation - FAILED</h2>
+
+<p>Hello,</p>
+
+<p>The ReadyAPI automation execution has failed.</p>
+
+<table border="1" cellpadding="8" cellspacing="0">
+    <tr><td><b>Project</b></td><td>{{PROJECT}}</td></tr>
+    <tr><td><b>Test Suite</b></td><td>{{TEST_SUITE}}</td></tr>
+    <tr><td><b>Test Case</b></td><td>{{TEST_CASE}}</td></tr>
+    <tr><td><b>Build</b></td><td>#{{BUILD_NUMBER}}</td></tr>
+    <tr><td><b>Result</b></td><td>FAILED</td></tr>
+</table>
+
+<p>Please review the Jenkins console output and archived reports.</p>
+
+<p>
+<b>Jenkins Build:</b><br>
+<a href="{{BUILD_URL}}">{{BUILD_URL}}</a>
+</p>
+
+<p>Regards,<br>Jenkins Automation</p>
+
+</body>
+</html>
